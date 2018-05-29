@@ -1,0 +1,55 @@
+﻿<div class="jumbotron text-center" >
+    <h1>Cari Berita</h1>
+    <form id="searchForm" class="form-inline" method="post" action="">
+        <div class="input-group">
+            <input type="text" class="form-control" id="Keywords" name="Keywords" placeholder="Cari berita disini" size="80" required />
+            <div class="input-group-btn">
+                <button type="submit" class="btn btn-primary" id="search" value="search">search</button>
+            </div>
+        </div>
+        <div>
+            <label class="radio-inline"><input type="radio" name="Algorithm" value="KMP" checked="checked">KMP</label>
+            <label class="radio-inline"><input type="radio" name="Algorithm" value="BM">Boyer-Moore</label>
+            <label class="radio-inline"><input type="radio" name="Algorithm" value="REGEX">Regex</label>
+        </div>
+    </form>
+</div>
+
+@{
+    if (IsPost)
+    {
+        string Keywords = Request["Keywords"];
+        string Algorithm = Request["Algorithm"];
+        Newtonsoft.Json.Linq.JArray jsonArray;
+
+        using (WebClient client = new WebClient())
+        {
+
+            byte[] response =
+            client.UploadValues("http://localhost:7327/api/news", new System.Collections.Specialized.NameValueCollection()
+            {
+               { "Keywords", Keywords },
+               { "Algorithm", Algorithm }
+            });
+
+            string result = System.Text.Encoding.UTF8.GetString(response);
+            jsonArray = Newtonsoft.Json.Linq.JArray.Parse(result);
+        }
+
+        <div class="container" id="news">
+            @foreach (Newtonsoft.Json.Linq.JObject item in jsonArray)
+            {
+                Newtonsoft.Json.Linq.JObject Information = (Newtonsoft.Json.Linq.JObject) item.GetValue("Information");
+                string link = (string)Information.SelectToken("Link");
+                string title = (string)Information.SelectToken("Title");
+                string content = (string)item.SelectToken("Content");
+                        
+                <a href= @link ><h4> @title </h4></a>
+                <p class="text-success"> @link </p>
+                <p> @content </p>
+                <br />
+            }
+        </div>
+    }
+
+}
